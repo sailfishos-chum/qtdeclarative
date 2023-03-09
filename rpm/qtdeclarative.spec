@@ -48,11 +48,6 @@ Qt is a set of libraries for developing applications.
 
 This package contains aditional tools for inspecting, testing, viewing, etc, QML imports and files.
 
-%description private-headers-devel
-This package provides private headers of libqt5-qtdeclarative that are normally
-not used by application development and that do not have any ABI or
-API guarantees. The packages that build against these have to require
-the exact Qt version.
 
 %prep
 %autosetup -n %{name}-%{version}/upstream

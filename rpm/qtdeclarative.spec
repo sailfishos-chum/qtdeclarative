@@ -81,6 +81,9 @@ touch .git
 
 make %{?_smp_mflags}
 
+#Fix plugins.qmltypes permission
+find . -name plugins.qmltypes -print0 | xargs -0 chmod -v 7444
+
 %install
 %qmake5_install
 # Fix wrong path in pkgconfig files

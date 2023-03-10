@@ -1,5 +1,5 @@
 %define _prefix /opt/qt5/
-%define qmake5 %{_prefix}/lib64/qt5/bin/qmake
+%define qmake5 %{_prefix}/%{_lib}/qt5/bin/qmake
 
 Name:       qt5-lgpl-qtdeclarative
 Summary:    Qt Declarative library

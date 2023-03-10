@@ -138,7 +138,7 @@ mkdir -p %{buildroot}/%{_docdir}/qt5/qtquick
 
 %files tools
 %license LICENSE.*
-%{_libdir}/qt5/bin/qmltyperegistrar
+%{_libdir}/qt5/bin/qml*
 
 %files devel
 %license LICENSE.*
@@ -152,4 +152,6 @@ mkdir -p %{buildroot}/%{_docdir}/qt5/qtquick
 %{_libdir}/metatypes/qt5qml*_metatypes.json
 %{_datadir}/qt5/mkspecs/modules/*.pri
 %{_datadir}/qt5/mkspecs/features/qmltypes.prf
+%{_datadir}/qt5/mkspecs/features/qmlcache.prf
+%{_datadir}/qt5/mkspecs/features/qtquickcompiler.prf
 %{_libdir}/qt5/qml/QtTest

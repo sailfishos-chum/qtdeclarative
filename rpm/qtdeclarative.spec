@@ -41,15 +41,16 @@ Requires: %{name}-devel%{?_isa} = %{version}-%{release}
 %{summary}.
 
 %prep
-%setup -q -n %{name}-%{version}/upstream
+%autosetup -n %{name}-%{version}/upstream
 
 %build
 
-chmod -R ugo+r .
+export QTDIR=%{_opt_qt5_prefix}
+touch .git
 
 %opt_qmake_qt5
 
-%make_build
+make %{?_smp_mflags}
 
 # bug in sb2 leading to 000 permission in some generated plugins.qmltypes files
 chmod -R ugo+r .

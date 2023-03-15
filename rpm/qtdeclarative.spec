@@ -1,8 +1,5 @@
 %define keepstatic 1
 
-# Bug: https://bugzilla.redhat.com/show_bug.cgi?id=2061194
-%define _lto_cflags %{nil}
-
 %global qt_module qtdeclarative
 
 # definition borrowed from qtbase
@@ -20,47 +17,8 @@ License: LGPLv2 with exceptions or GPLv3 with exceptions
 Url:     http://www.qt.io
 Source0: %{name}-%{version}.tar.bz2
 
-# header file to workaround multilib issue
-# https://bugzilla.redhat.com/show_bug.cgi?id=1441343
-Source5: qv4global_p-multilib.h
-
-## upstream patches
-## repo: https://invent.kde.org/qt/qt/qtdeclarative
-## branch: kde/5.15
-## git format-patch v5.15.8-lts-lgpl
-Patch1:  0001-Document-that-StyledText-also-supports-nbsp-and-quot.patch
-Patch2:  0002-Support-apos-in-styled-text.patch
-Patch3:  0003-Remove-unused-QPointer-QQuickPointerMask.patch
-Patch4:  0004-QQmlDelegateModel-Refresh-the-view-when-a-column-is-.patch
-Patch5:  0005-Fix-sweep-step-for-tainted-QObject-JavaScript-wrappe.patch
-Patch6:  0006-Fix-TapHandler-so-that-it-actually-registers-a-tap.patch
-Patch7:  0007-Revert-Fix-TapHandler-so-that-it-actually-registers-.patch
-Patch8:  0008-QQmlJs-FixedPoolArray-fix-UB-precondition-violation-.patch
-Patch9:  0009-V4-Do-not-call-dtor-of-an-object-we-continue-to-use.patch
-Patch10: 0010-Make-sure-QQuickWidget-and-its-offscreen-window-s-sc.patch
-Patch11: 0011-QQuickItem-Guard-against-cycles-in-nextPrevItemInTab.patch
-Patch12: 0012-QSGOpenGLDistanceFieldGlyphCache-fix-multiplication-.patch
-Patch13: 0013-QSGOpenGLDistanceFieldGlyphCache-fix-UB-ordering-of-.patch
-Patch14: 0014-Reset-currentChanges-if-currentChanges-is-active-whe.patch
-Patch15: 0015-Don-t-convert-QByteArray-in-startDrag.patch
-Patch16: 0016-Fix-build-after-95290f66b806a307b8da1f72f8fc2c698019.patch
-Patch17: 0017-Implement-accessibility-for-QQuickWidget.patch
-Patch18: 0018-Send-ObjectShow-event-for-visible-components-after-i.patch
-Patch19: 0019-QQuickItem-avoid-emitting-signals-during-destruction.patch
-Patch20: 0020-a11y-track-item-enabled-state.patch
-Patch21: 0021-Make-QaccessibleQuickWidget-private-API.patch
-
-
-## upstreamable patches
-Patch100: qt5-qtdeclarative-gcc11.patch
-# https://pagure.io/fedora-kde/SIG/issue/82
-Patch101: qtdeclarative-5.15.0-FixMaxXMaxYExtent.patch
-
 # filter qml provides
 %global __provides_exclude_from ^%{_opt_qt5_archdatadir}/qml/.*\\.so$
-
-Obsoletes: opt-qt5-qtjsbackend < 5.2.0
-Obsoletes: opt-qt5-qtdeclarative-render2d < 5.7.1-10
 
 BuildRequires: make
 BuildRequires: gcc-c++
@@ -70,20 +28,11 @@ BuildRequires: opt-qt5-qtbase-private-devel
 %{?_qt5:Requires: %{_qt5}%{?_isa} = %{_qt5_version}}
 BuildRequires: python3-base
 
-%if 0%{?tests}
-BuildRequires: dbus-x11
-BuildRequires: mesa-dri-drivers
-BuildRequires: time
-BuildRequires: xorg-x11-server-Xvfb
-%endif
-
 %description
 %{summary}.
 
 %package devel
 Summary: Development files for %{name}
-Obsoletes: opt-qt5-qtjsbackend-devel < 5.2.0
-Obsoletes: opt-qt5-qtdeclarative-render2d-devel < 5.7.1-10
 Provides:  %{name}-private-devel = %{version}-%{release}
 Requires: %{name}%{?_isa} = %{version}-%{release}
 Requires: opt-qt5-qtbase-devel%{?_isa}
@@ -101,10 +50,6 @@ Requires: %{name}-devel%{?_isa} = %{version}-%{release}
 
 
 %build
-
-# HACK so calls to "python" get what we want
-ln -s %{__python3} python
-export PATH=`pwd`:$PATH
 
 %opt_qmake_qt5
 
@@ -132,19 +77,6 @@ for prl_file in libQt5*.prl ; do
   sed -i -e "/^QMAKE_PRL_LIBS/d" ${prl_file}
 done
 popd
-
-
-%check
-%if 0%{?tests}
-export CTEST_OUTPUT_ON_FAILURE=1
-export PATH=%{buildroot}%{_opt_qt5_bindir}:$PATH
-export LD_LIBRARY_PATH=%{buildroot}%{_opt_qt5_libdir}
-make sub-tests-all %{?_smp_mflags}
-xvfb-run -a \
-dbus-launch --exit-with-session \
-time \
-make check -k -C tests ||:
-%endif
 
 
 %post -p /sbin/ldconfig

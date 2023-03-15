@@ -43,8 +43,9 @@ Requires: %{name}-devel%{?_isa} = %{version}-%{release}
 %prep
 %setup -q -n %{name}-%{version}/upstream
 
-
 %build
+
+chmod -R ugo+r .
 
 %opt_qmake_qt5
 

@@ -56,13 +56,6 @@ chmod -R ugo+r .
 %install
 %make_install INSTALL_ROOT=%{buildroot}
 
-%ifarch %{multilib_archs}
-# multilib: qv4global_p.h
-  mv %{buildroot}%{_opt_qt5_headerdir}/QtQml/%{version}/QtQml/private/qv4global_p.h \
-     %{buildroot}%{_opt_qt5_headerdir}/QtQml/%{version}/QtQml/private/qv4global_p-%{__isa_bits}.h
-  install -p -m644 -D %{SOURCE5} %{buildroot}%{_opt_qt5_headerdir}/QtQml/%{version}/QtQml/private/qv4global_p.h
-%endif
-
 ## .prl/.la file love
 # nuke .prl reference(s) to %%buildroot, excessive (.la-like) libs
 pushd %{buildroot}%{_opt_qt5_libdir}

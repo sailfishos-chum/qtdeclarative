@@ -1,10 +1,9 @@
 %define keepstatic 1
 
-%global qt_module qtdeclarative
 %global qt_version 5.15.8
 
 Summary: Qt5 - QtDeclarative component
-Name: opt-qt5-%{qt_module}
+Name: opt-qt5-qtdeclarative
 Version: %{qt_version}
 Release: 1%{?dist}
 

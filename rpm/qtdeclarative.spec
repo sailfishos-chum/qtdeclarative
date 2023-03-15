@@ -1,15 +1,11 @@
 %define keepstatic 1
 
 %global qt_module qtdeclarative
-
-# definition borrowed from qtbase
-%global multilib_archs x86_64 %{ix86} %{?mips} ppc64 ppc s390x s390 sparc64 sparcv9
-
-#global bootstrap 1
+%global qt_version 5.15.8
 
 Summary: Qt5 - QtDeclarative component
 Name: opt-qt5-%{qt_module}
-Version: 5.15.8
+Version: %{qt_version}
 Release: 1%{?dist}
 
 # See LICENSE.GPL LICENSE.LGPL LGPL_EXCEPTION.txt, for details
@@ -23,7 +19,7 @@ Source0: %{name}-%{version}.tar.bz2
 BuildRequires: make
 BuildRequires: gcc-c++
 BuildRequires: opt-qt5-rpm-macros
-BuildRequires: opt-qt5-qtbase-devel >= %{version}
+BuildRequires: opt-qt5-qtbase-devel >= %{qt_version}
 BuildRequires: opt-qt5-qtbase-private-devel
 %{?_qt5:Requires: %{_qt5}%{?_isa} = %{_qt5_version}}
 BuildRequires: python3-base

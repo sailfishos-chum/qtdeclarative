@@ -20,7 +20,8 @@ BuildRequires: gcc-c++
 BuildRequires: opt-qt5-rpm-macros
 BuildRequires: opt-qt5-qtbase-devel >= %{qt_version}
 BuildRequires: opt-qt5-qtbase-private-devel
-%{?_qt5:Requires: %{_qt5}%{?_isa} = %{_qt5_version}}
+%{?_qt5:Requires: %{_opt_qt5}%{?_isa} = %{_opt_qt5_version}}
+Requires: opt-qt5-qtbase-gui
 BuildRequires: python3-base
 
 %description

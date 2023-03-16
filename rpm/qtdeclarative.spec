@@ -26,6 +26,12 @@ BuildRequires: python3-base
 %description
 %{summary}.
 
+%package tools
+Summary: Tools for %{name}
+Requires: %{name}%{?_isa} = %{version}-%{release}
+%description tools
+%{summary}.
+
 %package devel
 Summary: Development files for %{name}
 Provides:  %{name}-private-devel = %{version}-%{release}
@@ -85,8 +91,10 @@ popd
 %{_opt_qt5_plugindir}/qmltooling/
 %{_opt_qt5_archdatadir}/qml/
 
-%files devel
+%files tools
 %{_opt_qt5_bindir}/qml*
+
+%files devel
 %{_opt_qt5_headerdir}/Qt*/
 %{_opt_qt5_libdir}/libQt5Qml.so
 %{_opt_qt5_libdir}/libQt5Qml.prl

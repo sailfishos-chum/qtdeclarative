@@ -1,160 +1,123 @@
-%define _prefix /opt/qt5/
-%define qmake5 %{_prefix}/%{_lib}/qt5/bin/qmake
+%define keepstatic 1
 
-Name:       qt5-lgpl-qtdeclarative
-Summary:    Qt Declarative library
-Version:    5.15.8
-Release:    1%{?dist}
-License:    (LGPLv2 or LGPLv3) with exception or GPLv3 or Qt Commercial
-URL:        https://www.qt.io/
-Source0:    %{name}-%{version}.tar.bz2
-BuildRequires:  qt5-lgpl-qtcore-devel >= 5.15.8
-BuildRequires:  qt5-lgpl-qtgui-devel >= 5.15.8
-BuildRequires:  qt5-lgpl-qtnetwork-devel
-BuildRequires:  qt5-lgpl-qtsql-devel
-BuildRequires:  qt5-lgpl-qttest-devel
-BuildRequires:  qt5-lgpl-qtxmlpatterns-devel
-BuildRequires:  qt5-lgpl-qmake
-BuildRequires:  fdupes
-BuildRequires:  python3-base
-BuildRequires:  gdb
-BuildRequires:  qml-rpm-macros
+%global qt_version 5.15.8
+
+Summary: Qt5 - QtDeclarative component
+Name: opt-qt5-qtdeclarative
+Version: 5.15.8
+Release: 1%{?dist}
+
+# See LICENSE.GPL LICENSE.LGPL LGPL_EXCEPTION.txt, for details
+License: LGPLv2 with exceptions or GPLv3 with exceptions
+Url:     http://www.qt.io
+Source0: %{name}-%{version}.tar.bz2
+
+# filter qml provides
+%global __provides_exclude_from ^%{_opt_qt5_archdatadir}/qml/.*\\.so$
+
+BuildRequires: make
+BuildRequires: gcc-c++
+BuildRequires: opt-qt5-rpm-macros
+BuildRequires: opt-qt5-qtbase-devel >= %{qt_version}
+BuildRequires: opt-qt5-qtbase-private-devel
+%{?_qt5:Requires: %{_qt5}%{?_isa} = %{_qt5_version}}
+BuildRequires: python3-base
 
 %description
-Qt is a cross-platform application and UI framework. Using Qt, you can
-write web-enabled applications once and deploy them across desktop,
-mobile and embedded systems without rewriting the source code.
-.
-This package contains the Declarative library
-
-%package devel
-Summary:        Qt Development Kit
-Group:          Development/Libraries/X11
-Requires:       %{name} = %{version}
-Requires:       %{name}-tools = %{version}
-Provides:       libQt5Quick-devel = %{version}
-Obsoletes:      libQt5Quick-devel < %{version}
-
-%description devel
-You need this package, if you want to compile programs with qtdeclarative.
+%{summary}.
 
 %package tools
-Summary:        Qt 5 Declarative Tools
-Group:          Development/Tools/Debuggers
-License:        GPL-3.0-only
-
+Summary: Tools for %{name}
+Requires: %{name}%{?_isa} = %{version}-%{release}
 %description tools
-Qt is a set of libraries for developing applications.
+%{summary}.
 
-This package contains aditional tools for inspecting, testing, viewing, etc, QML imports and files.
+%package devel
+Summary: Development files for %{name}
+Provides:  %{name}-private-devel = %{version}-%{release}
+Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: opt-qt5-qtbase-devel%{?_isa}
+%description devel
+%{summary}.
 
+%package static
+Summary: Static library files for %{name}
+Requires: %{name}-devel%{?_isa} = %{version}-%{release}
+%description static
+%{summary}.
 
 %prep
 %autosetup -n %{name}-%{version}/upstream
 
 %build
-export QTDIR=%{_prefix}
+
+export QTDIR=%{_opt_qt5_prefix}
 touch .git
 
-%ifarch %arm
-# to enable JIT, we need to enable thumb, as it is the only supported
-# configuration for JIT on ARM. unfortunately, we are not currently in the right
-# frame of mind to be able to deal with a full thumb transition, so we need to
-# hack it in.
-#
-# OBS forces -mno-thumb, so first step, we need to remove that, and then add our
-# own thumb argument. we can't do this in the .pro, as it won't propegate. we
-# can't do it in .qmake.conf, because that's loaded too early. -after is *just*
-# the right place: it's after everything has happened except for
-# default_post.prf, which sets up the real QMAKE_C{XX}FLAGS, so brutally abuse
-# it to acomplish our evil goals.
-%qmake5 \
-    QT.widgets.name= DEFINES+=QT_NO_WIDGETS \
-    -after \
-    QMAKE_CFLAGS_RELEASE-=-mno-thumb     QMAKE_CFLAGS_DEBUG-=-mno-thumb \
-    QMAKE_CXXFLAGS_RELEASE-=-mno-thumb   QMAKE_CXXFLAGS_DEBUG-=-mno-thumb \
-    QMAKE_CFLAGS_RELEASE+=-mthumb        QMAKE_CFLAGS_DEBUG+=-mthumb \
-    QMAKE_CXXFLAGS_RELEASE+=-mthumb      QMAKE_CXXFLAGS_DEBUG+=-mthumb
-%else
-%qmake5
-%endif
+%opt_qmake_qt5
 
 make %{?_smp_mflags}
 
-#Fix plugins.qmltypes permission
-find . -name plugins.qmltypes -print0 | xargs -0 chmod -v 7444
+# bug in sb2 leading to 000 permission in some generated plugins.qmltypes files
+chmod -R ugo+r .
 
 %install
-%qmake5_install
-# Fix wrong path in pkgconfig files
-find %{buildroot}%{_libdir}/pkgconfig -type f -name '*.pc' \
--exec perl -pi -e "s, -L%{_builddir}/?\S+,,g" {} \;
-# Fix wrong path in prl files
-find %{buildroot}%{_libdir} -type f -name '*.prl' \
--exec sed -i -e "/^QMAKE_PRL_BUILD_DIR/d;s/\(QMAKE_PRL_LIBS =\).*/\1/" {} \;
-# Remove unneeded .la files
-rm -f %{buildroot}/%{_libdir}/*.la
+%make_install INSTALL_ROOT=%{buildroot}
 
-# We don't need qt5/Qt/
-rm -rf %{buildroot}/%{_includedir}/qt5/Qt
-
-# Manually copy qmldevtools static library
-cp lib/libQt5QmlDevTools.a %{buildroot}/%{_libdir}
-%fdupes %{buildroot}/%{_libdir}
-%fdupes %{buildroot}/%{_includedir}
+## .prl/.la file love
+# nuke .prl reference(s) to %%buildroot, excessive (.la-like) libs
+pushd %{buildroot}%{_opt_qt5_libdir}
+for prl_file in libQt5*.prl ; do
+  sed -i -e "/^QMAKE_PRL_BUILD_DIR/d" ${prl_file}
+  rm -fv "$(basename ${prl_file} .prl).la"
+  sed -i -e "/^QMAKE_PRL_LIBS/d" ${prl_file}
+done
+popd
 
 
-# Copy docs
-mkdir -p %{buildroot}/%{_docdir}/qt5/qtqml
-mkdir -p %{buildroot}/%{_docdir}/qt5/qtquick
-
-
-#### Pre/Post section
-
-%post
-/sbin/ldconfig
-%postun
-/sbin/ldconfig
-
-#### File section
-
+%post -p /sbin/ldconfig
+%postun -p /sbin/ldconfig
 
 %files
-%license LICENSE.*
-%{_libdir}/libQt5Q*.so.*
-%dir %{_libdir}/qt5/qml
-%dir %{_libdir}/qt5/qml/Qt
-%{_libdir}/qt5/qml/QtQuick
-%{_libdir}/qt5/qml/QtQuick.2
-%{_libdir}/qt5/qml/QtQml
-%{_libdir}/qt5/qml/builtins.qmltypes
-%dir %{_libdir}/qt5/qml/Qt/labs
-%{_libdir}/qt5/qml/Qt/labs/animation/
-%{_libdir}/qt5/qml/Qt/labs/folderlistmodel/
-%{_libdir}/qt5/qml/Qt/labs/settings/
-%{_libdir}/qt5/qml/Qt/labs/sharedimage/
-%{_libdir}/qt5/qml/Qt/labs/qmlmodels/
-%{_libdir}/qt5/qml/Qt/labs/wavefrontmesh/
-%dir %{_libdir}/qt5/qml/Qt/test
-%{_libdir}/qt5/qml/Qt/test/qtestroot/
-%{_libdir}/qt5/plugins/qmltooling
+%license LICENSE.LGPL*
+%{_opt_qt5_libdir}/libQt5Qml.so.5*
+%{_opt_qt5_libdir}/libQt5QmlModels.so.5*
+%{_opt_qt5_libdir}/libQt5QmlWorkerScript.so.5*
+%{_opt_qt5_libdir}/libQt5Quick.so.5*
+%{_opt_qt5_libdir}/libQt5QuickWidgets.so.5*
+%{_opt_qt5_libdir}/libQt5QuickParticles.so.5*
+%{_opt_qt5_libdir}/libQt5QuickShapes.so.5*
+%{_opt_qt5_libdir}/libQt5QuickTest.so.5*
+%{_opt_qt5_plugindir}/qmltooling/
+%{_opt_qt5_archdatadir}/qml/
 
 %files tools
-%license LICENSE.*
-%{_libdir}/qt5/bin/qml*
+%{_opt_qt5_bindir}/qml*
 
 %files devel
-%license LICENSE.*
-%{_includedir}/qt5/Qt*
-%{_libdir}/cmake/Qt5*
-%{_libdir}/libQt5*.prl
-%{_libdir}/libQt5Q*.so
-%{_libdir}/libQt5*.a
-%{_libdir}/pkgconfig/Qt5Q*.pc
-%{_libdir}/metatypes/qt5quick*_metatypes.json
-%{_libdir}/metatypes/qt5qml*_metatypes.json
-%{_datadir}/qt5/mkspecs/modules/*.pri
-%{_datadir}/qt5/mkspecs/features/qmltypes.prf
-%{_datadir}/qt5/mkspecs/features/qmlcache.prf
-%{_datadir}/qt5/mkspecs/features/qtquickcompiler.prf
-%{_libdir}/qt5/qml/QtTest
+%{_opt_qt5_headerdir}/Qt*/
+%{_opt_qt5_libdir}/libQt5Qml.so
+%{_opt_qt5_libdir}/libQt5Qml.prl
+%{_opt_qt5_libdir}/libQt5QmlModels.so
+%{_opt_qt5_libdir}/libQt5QmlModels.prl
+%{_opt_qt5_libdir}/libQt5QmlWorkerScript.so
+%{_opt_qt5_libdir}/libQt5QmlWorkerScript.prl
+%{_opt_qt5_libdir}/libQt5Quick*.so
+%{_opt_qt5_libdir}/libQt5Quick*.prl
+%dir %{_opt_qt5_libdir}/cmake/Qt5Quick*/
+%{_opt_qt5_libdir}/cmake/Qt5*/Qt5*Config*.cmake
+%{_opt_qt5_libdir}/metatypes/qt5*_metatypes.json
+%{_opt_qt5_libdir}/pkgconfig/Qt5*.pc
+%{_opt_qt5_archdatadir}/mkspecs/modules/*.pri
+%{_opt_qt5_archdatadir}/mkspecs/features/*.prf
+%dir %{_opt_qt5_libdir}/cmake/Qt5Qml/
+%{_opt_qt5_libdir}/cmake/Qt5Qml/Qt5Qml_*Factory.cmake
+%{_opt_qt5_libdir}/cmake/Qt5QmlImportScanner/
+
+%files static
+%{_opt_qt5_libdir}/libQt5QmlDevTools.a
+%{_opt_qt5_libdir}/libQt5QmlDevTools.prl
+%{_opt_qt5_libdir}/libQt5PacketProtocol.a
+%{_opt_qt5_libdir}/libQt5PacketProtocol.prl
+%{_opt_qt5_libdir}/libQt5QmlDebug.a
+%{_opt_qt5_libdir}/libQt5QmlDebug.prl

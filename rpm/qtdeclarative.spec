@@ -35,8 +35,9 @@ Requires: %{name}%{?_isa} = %{version}-%{release}
 
 %package devel
 Summary: Development files for %{name}
-Provides:  %{name}-private-devel = %{version}-%{release}
+Provides: %{name}-private-devel = %{version}-%{release}
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Requires: %{name}-tools = %{version}-%{release}
 Requires: opt-qt5-qtbase-devel%{?_isa}
 %description devel
 %{summary}.

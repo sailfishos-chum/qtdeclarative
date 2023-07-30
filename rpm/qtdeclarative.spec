@@ -1,10 +1,10 @@
 %define keepstatic 1
 
-%global qt_version 5.15.9
+%global qt_version 5.15.10
 
 Summary: Qt5 - QtDeclarative component
 Name: opt-qt5-qtdeclarative
-Version: 5.15.9+kde24
+Version: 5.15.10+kde29
 Release: 1%{?dist}
 
 # See LICENSE.GPL LICENSE.LGPL LGPL_EXCEPTION.txt, for details
